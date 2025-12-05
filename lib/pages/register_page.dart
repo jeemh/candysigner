@@ -14,12 +14,42 @@ class _RegisterPageState extends State<RegisterPage> {
   final _confirmController = TextEditingController();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
-  final _locationController = TextEditingController();
-  final _mbtiController = TextEditingController();
   String _gender = 'M';
+  String? _selectedLocation;
+  String? _selectedMbti;
   String? _error;
   bool _isLoading = false;
   final ApiService _api = ApiService();
+
+  final List<String> _locations = ['서울', '경기남부', '경기북부', '그 외'];
+  final List<String> _mbtiTypes = [
+    'ISTJ',
+    'ISFJ',
+    'INFJ',
+    'INTJ',
+    'ISTP',
+    'ISFP',
+    'INFP',
+    'INTP',
+    'ESTP',
+    'ESFP',
+    'ENFP',
+    'ENTP',
+    'ESTJ',
+    'ESFJ',
+    'ENFJ',
+    'ENTJ',
+  ];
+
+  @override
+  void dispose() {
+    _usernameController.dispose();
+    _passwordController.dispose();
+    _confirmController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
 
   Future<void> _register() async {
     final username = _usernameController.text.trim();
@@ -49,14 +79,8 @@ class _RegisterPageState extends State<RegisterPage> {
           _phoneController.text.trim().isEmpty
               ? null
               : _phoneController.text.trim(),
-      location:
-          _locationController.text.trim().isEmpty
-              ? null
-              : _locationController.text.trim(),
-      mbti:
-          _mbtiController.text.trim().isEmpty
-              ? null
-              : _mbtiController.text.trim(),
+      location: _selectedLocation,
+      mbti: _selectedMbti,
     );
     setState(() => _isLoading = false);
     if (success && mounted) {
@@ -115,14 +139,32 @@ class _RegisterPageState extends State<RegisterPage> {
               decoration: const InputDecoration(labelText: '연락처 / 인스타'),
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _locationController,
+            DropdownButtonFormField<String>(
+              value: _selectedLocation,
+              hint: const Text('지역 선택'),
               decoration: const InputDecoration(labelText: '지역'),
+              items:
+                  _locations.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+              onChanged: (v) => setState(() => _selectedLocation = v),
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _mbtiController,
+            DropdownButtonFormField<String>(
+              value: _selectedMbti,
+              hint: const Text('MBTI 선택'),
               decoration: const InputDecoration(labelText: 'MBTI'),
+              items:
+                  _mbtiTypes.map((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value),
+                    );
+                  }).toList(),
+              onChanged: (v) => setState(() => _selectedMbti = v),
             ),
             const SizedBox(height: 24),
             _isLoading

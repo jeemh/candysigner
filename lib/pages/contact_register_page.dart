@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../services/api_service.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -14,11 +13,16 @@ class ContactRegisterPage extends StatefulWidget {
 class _ContactRegisterPageState extends State<ContactRegisterPage> {
   final _introController = TextEditingController();
   final _contactController = TextEditingController();
-  String _location = '서울';
-  final _mbtiController = TextEditingController();
   String? _error;
   bool _isLoading = false;
   final ApiService _api = ApiService();
+
+  @override
+  void dispose() {
+    _introController.dispose();
+    _contactController.dispose();
+    super.dispose();
+  }
 
   Future<void> _submit() async {
     final intro = _introController.text.trim();
@@ -27,29 +31,22 @@ class _ContactRegisterPageState extends State<ContactRegisterPage> {
       setState(() => _error = '소개와 연락처를 입력하세요');
       return;
     }
-    final userIdStr = await const FlutterSecureStorage().read(key: 'user_id');
-    if (userIdStr == null) {
-      setState(() => _error = '로그인 정보가 없습니다');
-      return;
-    }
 
     final user = context.read<AuthProvider>().user;
     if (user == null) {
       setState(() => _error = '로그인 정보가 없습니다');
       return;
     }
-
+    // 사용자의 지역 정보가 없을 경우 기본값으로 '그 외'를 사용합니다.
+    final location = user.location ?? '그 외';
     setState(() => _isLoading = true);
     final success = await _api.createContact(
-      userId: int.parse(userIdStr),
+      userId: user.id,
       intro: intro,
       contactValue: contact,
       gender: user.gender,
-      location: _location,
-      mbti:
-          _mbtiController.text.trim().isEmpty
-              ? null
-              : _mbtiController.text.trim(),
+      location: location,
+      mbti: user.mbti,
     );
     setState(() => _isLoading = false);
     if (success && mounted) {
@@ -80,22 +77,6 @@ class _ContactRegisterPageState extends State<ContactRegisterPage> {
               decoration: const InputDecoration(labelText: '연락처/인스타*'),
             ),
             const SizedBox(height: 12),
-            DropdownButtonFormField<String>(
-              value: _location,
-              decoration: const InputDecoration(labelText: '지역'),
-              items: const [
-                DropdownMenuItem(value: '서울', child: Text('서울')),
-                DropdownMenuItem(value: '경기남부', child: Text('경기남부')),
-                DropdownMenuItem(value: '경기북부', child: Text('경기북부')),
-                DropdownMenuItem(value: '그 외', child: Text('그 외')),
-              ],
-              onChanged: (v) => setState(() => _location = v ?? '서울'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _mbtiController,
-              decoration: const InputDecoration(labelText: 'MBTI'),
-            ),
             const SizedBox(height: 24),
             _isLoading
                 ? const CircularProgressIndicator()
