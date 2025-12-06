@@ -5,6 +5,8 @@ import '../main.dart';
 import 'contact_register_page.dart';
 import '../services/api_service.dart';
 import '../models/contact.dart';
+import 'package:lottie/lottie.dart';
+import 'dart:ui';
 
 class ContactMenuPage extends StatefulWidget {
   const ContactMenuPage({super.key});
@@ -15,12 +17,9 @@ class ContactMenuPage extends StatefulWidget {
 
 class _ContactMenuPageState extends State<ContactMenuPage> {
   final ApiService _api = ApiService();
-  bool _isLoading = false;
 
   /// 1. 사용자에게 연락처 뽑기 실행 여부를 확인하는 다이얼로그를 표시합니다.
   Future<void> _showConfirmationDialog() async {
-    if (_isLoading) return;
-
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder:
@@ -41,17 +40,39 @@ class _ContactMenuPageState extends State<ContactMenuPage> {
     );
 
     if (confirmed == true) {
-      _fetchContact();
+      _startDrawAnimationAndFetch();
     }
   }
 
-  /// 2. 실제 연락처를 가져오는 API를 호출하고 결과를 처리합니다.
-  Future<void> _fetchContact() async {
-    setState(() => _isLoading = true);
+  /// 2. 애니메이션을 보여주면서 백그라운드에서 연락처를 가져옵니다.
+  Future<void> _startDrawAnimationAndFetch() async {
+    // 배경을 흐리게 하고 애니메이션을 보여주는 다이얼로그 표시
+    showDialog(
+      context: context,
+      barrierDismissible: false, // 로딩 중에는 닫을 수 없도록 설정
+      barrierColor: Colors.black.withOpacity(0.5), // 반투명한 검은색 배경
+      builder:
+          (context) => BackdropFilter(
+            // 배경 블러 효과
+            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: Dialog(
+              backgroundColor: Colors.transparent,
+              elevation: 0,
+              child: Center(
+                child: Lottie.asset(
+                  'assets/animations/drawing_candy.json',
+                  width: 350, // 애니메이션 크기 증가
+                  height: 350, // 애니메이션 크기 증가
+                ),
+              ),
+            ),
+          ),
+    );
 
+    // 3. 실제 연락처를 가져오는 API 호출
     final user = context.read<AuthProvider>().user;
     if (user == null || user.location == null || user.location!.isEmpty) {
-      setState(() => _isLoading = false);
+      Navigator.pop(context); // 애니메이션 다이얼로그 닫기
       if (mounted) {
         showDialog(
           context: context,
@@ -71,12 +92,19 @@ class _ContactMenuPageState extends State<ContactMenuPage> {
       return;
     }
 
-    final c = await _api.drawContact(user.location!, user.gender);
-    setState(() => _isLoading = false);
+    // API 호출과 최소 지연 시간을 동시에 실행하여 애니메이션이 충분히 보이도록 보장
+    final results = await Future.wait([
+      _api.drawContact(user.location!, user.gender),
+      Future.delayed(const Duration(milliseconds: 2500)), // 최소 2.5초 대기
+    ]);
+
+    final c = results[0] as Contact?;
 
     if (!mounted) return;
+    Navigator.pop(context); // 애니메이션 다이얼로그 닫기
 
     if (c != null) {
+      // 4-1. 성공 시 결과 표시
       showDialog(
         context: context,
         builder:
@@ -99,6 +127,7 @@ class _ContactMenuPageState extends State<ContactMenuPage> {
             ),
       );
     } else {
+      // 4-2. 실패 시 결과 표시
       showDialog(
         context: context,
         builder:
@@ -157,13 +186,10 @@ class _ContactMenuPageState extends State<ContactMenuPage> {
               child: const Text('연락처 등록'),
             ),
             const SizedBox(height: 20),
-            if (_isLoading)
-              const Center(child: CircularProgressIndicator())
-            else
-              ElevatedButton(
-                onPressed: _showConfirmationDialog,
-                child: const Text('연락처 뽑기'),
-              ),
+            ElevatedButton(
+              onPressed: _showConfirmationDialog,
+              child: const Text('연락처 뽑기'),
+            ),
             const Spacer(),
           ],
         ),
