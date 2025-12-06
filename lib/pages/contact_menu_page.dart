@@ -18,6 +18,29 @@ class ContactMenuPage extends StatefulWidget {
 
 class _ContactMenuPageState extends State<ContactMenuPage> {
   final ApiService _api = ApiService();
+  int? _availableContactsCount;
+
+  @override
+  void initState() {
+    super.initState();
+    // 위젯이 빌드된 후 첫 프레임에서 연락처 개수를 가져옵니다.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _fetchAvailableContactsCount();
+    });
+  }
+
+  /// 뽑을 수 있는 연락처의 개수를 가져와 상태를 업데이트합니다.
+  Future<void> _fetchAvailableContactsCount() async {
+    final user = context.read<AuthProvider>().user;
+    if (user == null || user.location == null || user.location!.isEmpty) return;
+
+    final contacts = await _api.fetchNearbyContacts(
+      user.location!,
+      excludeGender: user.gender,
+    );
+    if (!mounted) return;
+    setState(() => _availableContactsCount = contacts.length);
+  }
 
   /// 1. 사용자에게 연락처 뽑기 실행 여부를 확인하는 다이얼로그를 표시합니다.
   Future<void> _showConfirmationDialog() async {
@@ -57,6 +80,8 @@ class _ContactMenuPageState extends State<ContactMenuPage> {
       if (!mounted) return;
 
       if (availableContacts.isNotEmpty) {
+        // 뽑기 전 개수를 현재 상태에 반영
+        setState(() => _availableContactsCount = availableContacts.length);
         // 뽑을 연락처가 있으면 애니메이션 시작
         _startDrawAnimationAndFetch(user);
       } else {
@@ -123,6 +148,10 @@ class _ContactMenuPageState extends State<ContactMenuPage> {
 
     // 4. API 결과에 따라 최종 다이얼로그를 보여줍니다.
     if (c != null) {
+      // 연락처 뽑기 성공 시, 카운트를 1 감소시킵니다.
+      setState(() {
+        _availableContactsCount = (_availableContactsCount ?? 1) - 1;
+      });
       showDialog(
         context: context,
         builder:
@@ -174,6 +203,17 @@ class _ContactMenuPageState extends State<ContactMenuPage> {
       appBar: AppBar(
         title: const Text('연락처 메뉴'),
         actions: [
+          // 뽑을 수 있는 연락처 개수 표시
+          if (_availableContactsCount != null)
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.only(right: 8.0),
+                child: Chip(
+                  label: Text('남은 사탕: $_availableContactsCount개'),
+                  padding: const EdgeInsets.all(4),
+                ),
+              ),
+            ),
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
