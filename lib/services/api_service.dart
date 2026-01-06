@@ -9,23 +9,9 @@ class ApiService {
   static final String _baseUrl =
       Platform.isAndroid ? 'http://10.0.2.2:3000' : 'http://localhost:3000';
 
-  /// ID/비밀번호 로그인
-  Future<User?> login(String username, String password) async {
-    final res = await http.post(
-      Uri.parse('$_baseUrl/auth/login'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'username': username, 'password': password}),
-    );
-    if (res.statusCode == 200) {
-      return User.fromJson(jsonDecode(res.body));
-    }
-    return null;
-  }
-
   /// 회원가입
   Future<bool> register({
     required String username,
-    required String password,
     required String name,
     required String gender,
     String? phoneOrInsta,
@@ -37,7 +23,6 @@ class ApiService {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'username': username,
-        'password': password,
         'name': name,
         'gender': gender,
         'phone_or_insta': phoneOrInsta,
@@ -48,18 +33,22 @@ class ApiService {
     return res.statusCode == 201;
   }
 
-  // 구글 로그인은 사용하지 않음. 필요하다면 다시 주석 해제
-  // Future<User?> loginWithGoogle(String idToken) async {
-  //   final res = await http.post(
-  //     Uri.parse('$_baseUrl/auth/google'),
-  //     headers: {'Content-Type': 'application/json'},
-  //     body: jsonEncode({'idToken': idToken}),
-  //   );
-  //   if (res.statusCode == 200) {
-  //     return User.fromJson(jsonDecode(res.body));
-  //   }
-  //   return null;
-  // }
+  /// 구글 로그인 (ID Token 전송)
+  Future<Object?> loginWithGoogle(String idToken) async {
+    final res = await http.post(
+      Uri.parse('$_baseUrl/auth/google'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'idToken': idToken}),
+    );
+    if (res.statusCode == 200) {
+      final data = jsonDecode(res.body);
+      if (data['needsRegister'] == true) {
+        return data;
+      }
+      return User.fromJson(data);
+    }
+    return null;
+  }
 
   Future<bool> createContact({
     required int userId,

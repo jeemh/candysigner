@@ -5,6 +5,7 @@ const bcrypt = require('bcryptjs');
 const mysql = require('mysql2/promise');
 const cors = require('cors');
 const dotenv = require('dotenv');
+const axios = require('axios');
 dotenv.config();
 
 const app = express();
@@ -27,13 +28,13 @@ const pool = mysql.createPool(dbConfig);
 
 /* -------------------------- 회원가입 -------------------------- */
 app.post('/auth/register', async (req, res) => {
-  const { username, password, name, phone_or_insta, gender, location, mbti } =
+  const { username, name, phone_or_insta, gender, location, mbti } =
     req.body;
 
-  if (!username || !password || !name || !gender) {
+  if (!username || !name || !gender) {
     return res
       .status(400)
-      .json({ error: 'username, password, name, gender 는 필수입니다.' });
+      .json({ error: 'username, name, gender 는 필수입니다.' });
   }
 
   try {
@@ -46,14 +47,11 @@ app.post('/auth/register', async (req, res) => {
       return res.status(409).json({ error: '이미 사용 중인 아이디입니다.' });
     }
 
-    const hashed = await bcrypt.hash(password, SALT_ROUNDS);
-
     const [result] = await pool.execute(
-      `INSERT INTO users (username, password, name, phone_or_insta, gender, location, mbti)
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO users (username, name, phone_or_insta, gender, location, mbti)
+       VALUES (?, ?, ?, ?, ?, ?)`,
       [
         username,
-        hashed,
         name,
         phone_or_insta,
         gender,
@@ -69,38 +67,41 @@ app.post('/auth/register', async (req, res) => {
   }
 });
 
-/* -------------------------- 로그인 -------------------------- */
-app.post('/auth/login', async (req, res) => {
-  const { username, password } = req.body;
+/* -------------------------- 구글 로그인 -------------------------- */
+app.post('/auth/google', async (req, res) => {
+  const { idToken } = req.body;
 
-  if (!username || !password) {
-    return res
-      .status(400)
-      .json({ error: 'username, password 를 모두 입력하세요.' });
+  if (!idToken) {
+    return res.status(400).json({ error: 'ID Token is required' });
   }
 
   try {
+    // 1. 구글 API로 ID Token 검증 및 사용자 정보 조회
+    const googleRes = await axios.get(
+      `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`
+    );
+    const { email, name } = googleRes.data;
+
+    // 2. DB에서 사용자 확인
     const [rows] = await pool.execute(
       'SELECT * FROM users WHERE username = ? LIMIT 1',
-      [username]
+      [email]
     );
 
-    if (rows.length === 0) {
-      return res.status(401).json({ error: '존재하지 않는 계정입니다.' });
+    if (rows.length > 0) {
+      // 이미 가입된 사용자
+      const user = rows[0];
+      // 비밀번호 제외하고 응답
+      if (user.password) delete user.password;
+      res.json(user);
+    } else {
+      // 신규 가입 필요: 클라이언트에게 가입 페이지로 이동하라는 신호와 기본 정보 전달
+      res.json({ needsRegister: true, username: email, name: name });
     }
 
-    const user = rows[0];
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ error: '비밀번호가 틀렸습니다.' });
-    }
-
-    // 성공: 비밀번호 제거 후 응답
-    delete user.password;
-    res.json(user);
   } catch (err) {
     console.error(err);
-    res.status(500).json({ error: '로그인 실패' });
+    res.status(500).json({ error: 'Google Login Failed' });
   }
 });
 

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "941176497130",
+    "project_id": "project-8008473512363151259",
+    "storage_bucket": "project-8008473512363151259.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:941176497130:android:66c5292c839c347ce94893",
+        "android_client_info": {
+          "package_name": "com.example.candysigner"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "941176497130-o6hkq6lt4geutssovvkaatorehnv0g21.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.candysigner",
+            "certificate_hash": "7b03ad64b227caf6578a9fe28e51ddc3ca1e6e19"
+          }
+        },
+        {
+          "client_id": "941176497130-6tf226d7sk9bkth96536sv4vuk47ps91.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBieA4i772azyRE1pT1wjVHnOjkUy-RpO8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "941176497130-6tf226d7sk9bkth96536sv4vuk47ps91.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

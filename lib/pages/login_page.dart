@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../services/api_service.dart';
 import 'contact_menu_page.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
+import '../models/user.dart';
+import 'register_page.dart';
 
 final storage = FlutterSecureStorage();
 
@@ -15,33 +18,51 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
   String? _error;
   final ApiService _api = ApiService();
+  final GoogleSignIn _googleSignIn = GoogleSignIn();
 
-  Future<void> _login() async {
-    final username = _usernameController.text.trim();
-    final password = _passwordController.text;
-    if (username.isEmpty || password.isEmpty) {
-      setState(() => _error = '아이디와 비밀번호를 입력하세요');
-      return;
-    }
+  Future<void> _handleGoogleSignIn() async {
+    try {
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) return; // 사용자가 취소함
 
-    final user = await _api.login(username, password);
-    if (user != null) {
-      context.read<AuthProvider>().saveAndLogin(user);
-      setState(() {
-        _error = null;
-      });
-      if (!mounted) return;
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (_) => const ContactMenuPage()),
-        (route) => false,
-      ); // 로그인 성공 후 메뉴로 이동
-    } else {
-      setState(() => _error = '로그인 실패');
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
+      final String? idToken = googleAuth.idToken;
+
+      if (idToken != null) {
+        final result = await _api.loginWithGoogle(idToken);
+        if (result is User) {
+          if (!mounted) return;
+          context.read<AuthProvider>().saveAndLogin(result);
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const ContactMenuPage()),
+            (route) => false,
+          );
+        } else if (result is Map && result['needsRegister'] == true) {
+          // 회원가입 필요 -> 회원가입 페이지로 이동 (정보 프리필)
+          if (!mounted) return;
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder:
+                  (_) => RegisterPage(
+                    initialUsername: result['username'],
+                    initialName: result['name'],
+                  ),
+            ),
+          );
+        } else {
+          setState(() => _error = '구글 로그인 서버 인증 실패');
+        }
+      } else {
+        // idToken이 null인 경우 에러 메시지 표시
+        setState(() => _error = '구글 인증 토큰을 가져오지 못했습니다. (설정 확인 필요)');
+      }
+    } catch (error) {
+      setState(() => _error = '구글 로그인 실패: $error');
     }
   }
 
@@ -54,18 +75,11 @@ class _LoginPageState extends State<LoginPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
-              controller: _usernameController,
-              decoration: const InputDecoration(labelText: '아이디'),
+            OutlinedButton.icon(
+              onPressed: _handleGoogleSignIn,
+              icon: const Icon(Icons.login),
+              label: const Text('Google로 로그인'),
             ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: _passwordController,
-              decoration: const InputDecoration(labelText: '비밀번호'),
-              obscureText: true,
-            ),
-            const SizedBox(height: 24),
-            ElevatedButton(onPressed: _login, child: const Text('로그인')),
             if (_error != null) ...[
               const SizedBox(height: 16),
               Text(_error!, style: const TextStyle(color: Colors.red)),

@@ -2,7 +2,10 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 
 class RegisterPage extends StatefulWidget {
-  const RegisterPage({super.key});
+  final String? initialUsername;
+  final String? initialName;
+
+  const RegisterPage({super.key, this.initialUsername, this.initialName});
 
   @override
   State<RegisterPage> createState() => _RegisterPageState();
@@ -10,8 +13,6 @@ class RegisterPage extends StatefulWidget {
 
 class _RegisterPageState extends State<RegisterPage> {
   final _usernameController = TextEditingController();
-  final _passwordController = TextEditingController();
-  final _confirmController = TextEditingController();
   final _nameController = TextEditingController();
   final _phoneController = TextEditingController();
   String _gender = 'M';
@@ -42,10 +43,19 @@ class _RegisterPageState extends State<RegisterPage> {
   ];
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.initialUsername != null) {
+      _usernameController.text = widget.initialUsername!;
+    }
+    if (widget.initialName != null) {
+      _nameController.text = widget.initialName!;
+    }
+  }
+
+  @override
   void dispose() {
     _usernameController.dispose();
-    _passwordController.dispose();
-    _confirmController.dispose();
     _nameController.dispose();
     _phoneController.dispose();
     super.dispose();
@@ -53,26 +63,15 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> _register() async {
     final username = _usernameController.text.trim();
-    final password = _passwordController.text;
-    final confirm = _confirmController.text;
     final name = _nameController.text.trim();
 
-    if ([username, password, confirm, name].any((e) => e.isEmpty)) {
+    if ([username, name].any((e) => e.isEmpty)) {
       setState(() => _error = '필수 항목을 모두 입력하세요');
-      return;
-    }
-    if (password.length < 6) {
-      setState(() => _error = '비밀번호는 6자 이상이어야 합니다');
-      return;
-    }
-    if (password != confirm) {
-      setState(() => _error = '비밀번호가 일치하지 않습니다');
       return;
     }
     setState(() => _isLoading = true);
     final success = await _api.register(
       username: username,
-      password: password,
       name: name,
       gender: _gender,
       phoneOrInsta:
@@ -104,23 +103,13 @@ class _RegisterPageState extends State<RegisterPage> {
           children: [
             TextField(
               controller: _usernameController,
+              readOnly: widget.initialUsername != null, // 구글 가입 시 아이디 수정 불가
               decoration: const InputDecoration(labelText: '아이디*'),
             ),
             const SizedBox(height: 12),
             TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: '비밀번호*'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _confirmController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: '비밀번호 확인*'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
               controller: _nameController,
+              readOnly: widget.initialName != null,
               decoration: const InputDecoration(labelText: '이름*'),
             ),
             const SizedBox(height: 12),

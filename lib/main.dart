@@ -45,15 +45,6 @@ class StartPage extends StatelessWidget {
                   ),
               child: const Text('로그인'),
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed:
-                  () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const RegisterPage()),
-                  ),
-              child: const Text('회원가입'),
-            ),
           ],
         ),
       ),
