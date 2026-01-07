@@ -64,8 +64,13 @@ class _RegisterPageState extends State<RegisterPage> {
   Future<void> _register() async {
     final username = _usernameController.text.trim();
     final name = _nameController.text.trim();
+    final phoneOrInsta = _phoneController.text.trim();
 
-    if ([username, name].any((e) => e.isEmpty)) {
+    if (username.isEmpty ||
+        name.isEmpty ||
+        phoneOrInsta.isEmpty ||
+        _selectedLocation == null ||
+        _selectedMbti == null) {
       setState(() => _error = '필수 항목을 모두 입력하세요');
       return;
     }
@@ -74,10 +79,7 @@ class _RegisterPageState extends State<RegisterPage> {
       username: username,
       name: name,
       gender: _gender,
-      phoneOrInsta:
-          _phoneController.text.trim().isEmpty
-              ? null
-              : _phoneController.text.trim(),
+      phoneOrInsta: phoneOrInsta,
       location: _selectedLocation,
       mbti: _selectedMbti,
     );
@@ -113,6 +115,11 @@ class _RegisterPageState extends State<RegisterPage> {
               decoration: const InputDecoration(labelText: '이름*'),
             ),
             const SizedBox(height: 12),
+            TextField(
+              controller: _phoneController,
+              decoration: const InputDecoration(labelText: '연락처 / 인스타*'),
+            ),
+            const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               value: _gender,
               decoration: const InputDecoration(labelText: '성별*'),
@@ -123,15 +130,10 @@ class _RegisterPageState extends State<RegisterPage> {
               onChanged: (v) => setState(() => _gender = v ?? 'M'),
             ),
             const SizedBox(height: 12),
-            TextField(
-              controller: _phoneController,
-              decoration: const InputDecoration(labelText: '연락처 / 인스타'),
-            ),
-            const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               value: _selectedLocation,
               hint: const Text('지역 선택'),
-              decoration: const InputDecoration(labelText: '지역'),
+              decoration: const InputDecoration(labelText: '지역*'),
               items:
                   _locations.map((String value) {
                     return DropdownMenuItem<String>(
@@ -145,7 +147,7 @@ class _RegisterPageState extends State<RegisterPage> {
             DropdownButtonFormField<String>(
               value: _selectedMbti,
               hint: const Text('MBTI 선택'),
-              decoration: const InputDecoration(labelText: 'MBTI'),
+              decoration: const InputDecoration(labelText: 'MBTI*'),
               items:
                   _mbtiTypes.map((String value) {
                     return DropdownMenuItem<String>(

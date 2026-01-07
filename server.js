@@ -31,10 +31,10 @@ app.post('/auth/register', async (req, res) => {
   const { username, name, phone_or_insta, gender, location, mbti } =
     req.body;
 
-  if (!username || !name || !gender) {
+  if (!username || !name || !gender || !phone_or_insta || !location || !mbti) {
     return res
       .status(400)
-      .json({ error: 'username, name, gender 는 필수입니다.' });
+      .json({ error: '모든 항목을 입력해주세요.' });
   }
 
   try {
@@ -80,7 +80,7 @@ app.post('/auth/google', async (req, res) => {
     const googleRes = await axios.get(
       `https://oauth2.googleapis.com/tokeninfo?id_token=${idToken}`
     );
-    const { email, name } = googleRes.data;
+    const { email, name, gender } = googleRes.data;
 
     // 2. DB에서 사용자 확인
     const [rows] = await pool.execute(
@@ -96,7 +96,7 @@ app.post('/auth/google', async (req, res) => {
       res.json(user);
     } else {
       // 신규 가입 필요: 클라이언트에게 가입 페이지로 이동하라는 신호와 기본 정보 전달
-      res.json({ needsRegister: true, username: email, name: name });
+      res.json({ needsRegister: true, username: email, name: name, gender });
     }
 
   } catch (err) {
