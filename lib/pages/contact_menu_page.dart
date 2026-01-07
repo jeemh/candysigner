@@ -2,7 +2,7 @@ import 'package:candysigner/models/user.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../main.dart';
+import 'login_page.dart';
 import 'contact_register_page.dart';
 import '../services/api_service.dart';
 import '../models/contact.dart';
@@ -219,7 +219,7 @@ class _ContactMenuPageState extends State<ContactMenuPage> {
             onPressed: () {
               context.read<AuthProvider>().logout();
               Navigator.of(context).pushAndRemoveUntil(
-                MaterialPageRoute(builder: (_) => const StartPage()),
+                MaterialPageRoute(builder: (_) => const LoginPage()),
                 (route) => false,
               );
             },
