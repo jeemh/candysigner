@@ -10,12 +10,15 @@
 
 *   **회원가입 및 로그인**: 간단한 정보 입력으로 가입하고 서비스를 이용할 수 있습니다.
 *   **프로필 설정**: 자신의 지역, MBTI, 성별 등 기본 프로필을 설정합니다.
+*   
     <img width="355" height="482" alt="회원등록" src="https://github.com/user-attachments/assets/6d5748b5-eacc-4570-953e-adeeab558233" />
 
 *   **연락처 등록 (사탕 넣기)**: 자신을 어필할 한 줄 소개와 연락처(인스타 ID 등)를 '사탕'으로 만들어 등록합니다.
+*   
     <img width="342" height="258" alt="연락처등록" src="https://github.com/user-attachments/assets/255f80aa-0c50-4f04-bc33-816d642e2f92" />
 
 *   **연락처 뽑기 (사탕 뽑기)**: 내 프로필에 등록된 지역을 기반으로, 다른 사람이 등록한 '사탕'을 랜덤으로 하나 뽑습니다.
+*   
     <img width="240" height="426" alt="연락처뽑기" src="https://github.com/user-attachments/assets/103d91dc-e9e4-43c0-8bf1-d6e2a02fc6bb" />
 
 *   **안전한 교환**: 한 번 뽑힌 연락처는 다른 사람이 다시 뽑을 수 없도록 시스템에서 삭제됩니다.
